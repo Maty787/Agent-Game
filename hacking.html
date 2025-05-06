@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Terminal</title>
+    <style>
+        @font-face {
+            font-family: 'Government';
+            src: url('https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.woff2') format('woff2');
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Government', 'Roboto Mono', monospace;
+            background-color: #000;
+            color: #39d353;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            position: relative;
+            overflow: hidden;
+            background-image: 
+                linear-gradient(rgba(0, 20, 40, 0.97), rgba(0, 20, 40, 0.97)),
+                url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23024' fill-opacity='0.1' fill-rule='evenodd'%3E%3Cpath d='M0 0h40v40H0V0zm40 40h40v40H40V40zm0-40h2v40H40V0zM0 40h2v40H0V40z'/%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .terminal-container {
+            width: 65%;
+            max-width: 1000px;
+            height: 60vh;
+            position: relative;
+            box-shadow: 0 0 30px rgba(57, 211, 83, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            background-color: #102030;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #39d353;
+        }
+
+        .terminal-title {
+            color: #39d353;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .terminal-controls {
+            display: flex;
+        }
+
+        .terminal-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .close-button {
+            background-color: #ff5f57;
+        }
+
+        .minimize-button {
+            background-color: #ffbd2e;
+        }
+
+        .maximize-button {
+            background-color: #28ca41;
+        }
+
+        .hacking-window {
+            background-color: rgba(0, 8, 20, 0.95);
+            color: #39d353;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 15px;
+            width: 100%;
+            height: calc(100% - 64px);
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .hacking-window::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                transparent 0px,
+                transparent 1px,
+                rgba(0, 20, 40, 0.1) 2px,
+                rgba(0, 20, 40, 0.1) 3px
+            );
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .hacking-text {
+            white-space: pre-wrap;
+            line-height: 1.5;
+            font-size: 16px;
+            text-shadow: 0 0 5px rgba(57, 211, 83, 0.5);
+            position: relative;
+            z-index: 2;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 16px;
+            background-color: #39d353;
+            margin-left: 5px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .status-bar {
+            background-color: #102030;
+            color: #39d353;
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 10px;
+            font-size: 12px;
+            border-top: 1px solid #39d353;
+        }
+
+        .button-container {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: rgba(57, 211, 83, 0.1);
+            color: #39d353;
+            border: 1px solid #39d353;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(57, 211, 83, 0.3);
+        }
+
+        button:hover {
+            background-color: rgba(57, 211, 83, 0.2);
+            box-shadow: 0 0 15px rgba(57, 211, 83, 0.5);
+        }
+
+        /* Matrix background effect */
+        .matrix-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            opacity: 0.35;
+        }
+
+        /* Map overlay */
+        .map-overlay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            background-image: url("data:image/svg+xml,%3Csvg width='200' height='150' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='200' height='150' fill='%23102030' /%3E%3Cpath d='M10,10 L190,10 L190,140 L10,140 Z' stroke='%2339d353' stroke-width='1' fill='none' /%3E%3Ccircle cx='50' cy='50' r='5' fill='%2339d353' /%3E%3Ccircle cx='120' cy='80' r='5' fill='%23ff3333' /%3E%3Cpath d='M50,50 L120,80' stroke='%2339d353' stroke-width='1' stroke-dasharray='5,5' /%3E%3C/svg%3E");
+            border: 1px solid #39d353;
+            z-index: 3;
+            box-shadow: 0 0 10px rgba(57, 211, 83, 0.3);
+            opacity: 0.8;
+            pointer-events: none;
+        }
+        .con-button {
+            margin: 35px;
+            padding-left: 21px;
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal-container">
+        <div class="terminal-header">
+            <div class="terminal-title">SECURE TERMINAL - ACCESS LEVEL: ALPHA</div>
+            <div class="terminal-controls">
+                <div class="terminal-button minimize-button"></div>
+                <div class="terminal-button maximize-button"></div>
+                <div class="terminal-button close-button"></div>
+            </div>
+        </div>
+        <div class="hacking-window" id="hacking-window">
+            <div class="hacking-text" id="hacking-text"></div>
+        </div>
+        <div class="status-bar">
+            <span id="status">IDLE</span>
+            <span id="location">LANGLEY, VA</span>
+            <span id="encryption">AES-256</span>
+        </div>
+    </div>
+
+    <div class="map-overlay"></div>
+
+    <div class="button-container">
+        <button onclick="window.location.href='index.html'">DISCONNECT</button>
+    </div>
+    <div class = "con-button">
+        <button onclick="window.location.href='first.html'">CONTINUE</button>
+        </div>
+
+    <canvas class="matrix-bg" id="matrix"></canvas>
+
+    <script>
+        // Matrix effect
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const charArray = characters.split('');
+        
+        const fontSize = 12;
+        const columns = canvas.width / fontSize;
+        
+        const drops = [];
+        for (let i = 0; i < columns; i++) {
+            drops[i] = 1;
+        }
+        
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#0f0';
+            ctx.font = `${fontSize}px monospace`;
+            
+            for (let i = 0; i < drops.length; i++) {
+                const text = charArray[Math.floor(Math.random() * charArray.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                
+                drops[i]++;
+            }
+        }
+        
+        setInterval(drawMatrix, 33);
+
+        // Terminal animation
+        const hackingText = document.getElementById('hacking-text');
+        const statusElement = document.getElementById('status');
+        const messages = [
+            "> ESTABLISHING SECURE CONNECTION...",
+            "> Hello, Agent. In this mission, you will have to complete a series of tasks...",
+            "> ARE YOU READY?, IF YOU ARE PRESS CONTINUE..."
+        ];
+        
+        let index = 0;
+        let charIndex = 0;
+        let currentMessage = '';
+        
+        function typeWriter() {
+            if (index < messages.length) {
+                if (charIndex < messages[index].length) {
+                    currentMessage += messages[index].charAt(charIndex);
+                    hackingText.innerHTML = currentMessage + '<span class="cursor"></span>';
+                    charIndex++;
+                    statusElement.textContent = "WORKING...";
+                    
+                    // Randomly vary typing speed for realistic effect
+                    const speed = Math.random() * 50 + 20;
+                    setTimeout(typeWriter, speed);
+                } else {
+                    currentMessage += '\n';
+                    charIndex = 0;
+                    index++;
+                    
+                    // Pause between messages
+                    setTimeout(typeWriter, 500);
+                }
+            } else {
+                statusElement.textContent = "STANDBY";
+                hackingText.innerHTML = currentMessage + '<span class="cursor"></span>';
+            }
+        }
+        
+        window.onload = function() {
+            setTimeout(typeWriter, 300);
+        };
+    </script>
+</body>
+</html>
